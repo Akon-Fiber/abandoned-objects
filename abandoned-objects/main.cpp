@@ -7,6 +7,10 @@
 //
 
 #include <iostream>
+#include "opencv2/core.hpp"
+#include "opencv2/opencv.hpp"
+#include "utilities.hpp"
+#include "video.hpp"
 
 int main(int argc, const char * argv[]) {
     // insert code here...
