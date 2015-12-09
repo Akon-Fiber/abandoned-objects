@@ -11,9 +11,6 @@
 
 #include "video.hpp"
 
-#include "opencv2/opencv.hpp"
-#include "opencv2/video.hpp"
-
 using namespace std;
 using namespace cv;
 
@@ -119,4 +116,32 @@ void MedianBackground::UpdateBackground( Mat current_frame ){
         }
     }
     mCurrentAge *= mAgingRate;
+}
+
+VideoWriter* OpenVideoFile( char* filename, VideoCapture& video_to_emulate, int horizontal_multiple, int vertical_multiple, int spacing ){
+    int codec = static_cast<int>(video_to_emulate.get(CV_CAP_PROP_FOURCC));
+    Size image_size = Size((int) video_to_emulate.get(CV_CAP_PROP_FRAME_WIDTH),
+                           (int) video_to_emulate.get(CV_CAP_PROP_FRAME_HEIGHT));
+    double fps = video_to_emulate.get(CV_CAP_PROP_FPS);
+    return OpenVideoFile( filename, codec, image_size, fps, horizontal_multiple, vertical_multiple, spacing );
+}
+
+VideoWriter* OpenVideoFile( char* filename, int codec, Size image_size, double fps, int horizontal_multiple, int vertical_multiple, int spacing ){
+    VideoWriter* output_video = new VideoWriter();
+    Size video_size = Size((int) image_size.width*horizontal_multiple + spacing*(horizontal_multiple-1),
+                           (int) image_size.height*vertical_multiple + spacing*(vertical_multiple-1));
+    output_video->open(filename, codec, fps, video_size, true);
+    if (!output_video->isOpened())
+    {
+        cout  << "Could not open the output video for write: " << filename << endl;
+    }
+    return output_video;
+}
+
+void WriteVideoFrame( VideoWriter* output_video, Mat& video_frame ){
+    *output_video << video_frame;
+}
+
+void CloseVideoFile( VideoWriter* video ){
+    delete video;
 }

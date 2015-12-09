@@ -14,6 +14,8 @@
 
 #include <stdio.h>
 #include "opencv2/core.hpp"
+#include "opencv2/opencv.hpp"
+#include "opencv2/video.hpp"
 
 class MedianBackground
 {
@@ -39,5 +41,15 @@ public:
 void drawOpticalFlow(cv::Mat& optical_flow, cv::Mat& display, int spacing, cv::Scalar passed_line_colour=-1.0, cv::Scalar passed_point_colour=-1.0);
 
 void LucasKanadeOpticalFlow(cv::Mat& previous_gray_frame, cv::Mat& gray_frame, cv::Mat& display_image);
+
+/**** Handling Video *******/
+
+cv::VideoWriter* OpenVideoFile( char* filename, cv::VideoCapture& video_to_emulate, int horizontal_multiple=1, int vertical_multiple=1, int spacing=0 );
+
+cv::VideoWriter* OpenVideoFile( char* filename, int codec, cv::Size image_size, double fps, int horizontal_multiple=1, int vertical_multiple=1, int spacing=0 );
+
+void WriteVideoFrame( cv::VideoWriter* output_video, cv::Mat& video_frame );
+
+void CloseVideoFile( cv::VideoWriter* video );
 
 #endif /* video_hpp */

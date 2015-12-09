@@ -12,8 +12,24 @@
 #include "utilities.hpp"
 #include "video.hpp"
 
+using namespace std;
+using namespace cv;
+
 int main(int argc, const char * argv[]) {
-    // insert code here...
-    std::cout << "Hello, World!\n";
+    string filename(VIDEO_ONE);
+    VideoCapture video = *new VideoCapture();
+    video.open(filename);
+    if(!video.isOpened()){
+        cout << "Could not open video: " << filename << endl;
+        return -1;
+    }
+    namedWindow(VIDEO_ONE);
+    for(int i = 0; i < VIDEO_ONE_TOTAL_FRAMES; i++){
+        Mat current_frame;
+        video.set(CV_CAP_PROP_POS_FRAMES, i);
+        video.retrieve(current_frame);
+        imshow(VIDEO_ONE, current_frame);
+        cvWaitKey(1);
+    }
     return 0;
 }
