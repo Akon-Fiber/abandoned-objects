@@ -21,9 +21,6 @@
 #include <stdio.h>
 #include <iostream>
 #include "opencv2/core.hpp"
-#include "opencv2/opencv.hpp"
-#include "opencv2/highgui.hpp"
-#include "opencv2/imgproc.hpp"
 
 /******* Image operation helper functions *******/
 
@@ -35,6 +32,12 @@ void binary_closing_operation(cv::Mat *image);
 
 // back projects the colour sample
 cv::Mat back_project(cv::Mat image, cv::Mat colour_sample, int number_bins);
+
+std::vector<cv::Point2f> get_foreground_points(cv::Mat binary_image);
+
+cv::Point2f get_centre(std::vector<cv::Point> contour);
+
+std::vector<cv::Rect> get_object_roi(cv::Mat binary_image);
 
 /******* Image Display Functions ******************/
 
