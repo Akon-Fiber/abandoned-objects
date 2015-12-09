@@ -23,12 +23,24 @@ int main(int argc, const char * argv[]) {
         cout << "Could not open video: " << filename << endl;
         return -1;
     }
-    namedWindow(VIDEO_ONE);
-    for(int i = 0; i < VIDEO_ONE_TOTAL_FRAMES; i++){
-        Mat current_frame;
+
+    Mat current_frame, medianBgImageOne, medianBgImageTwo, medianDifference;
+    video.retrieve(current_frame);
+    MedianBackground medianBgOne = MedianBackground(current_frame, 1.01, 4);
+    MedianBackground medianBgTwo = MedianBackground(current_frame, 1.005, 4);
+    namedWindow("video");
+    namedWindow("Median One 1.01");
+    namedWindow("Median Two 1.005");
+    for(int i = 0; i < (int)video.get(CV_CAP_PROP_FRAME_COUNT); i++){
         video.set(CV_CAP_PROP_POS_FRAMES, i);
         video.retrieve(current_frame);
-        imshow(VIDEO_ONE, current_frame);
+        medianBgOne.UpdateBackground(current_frame);
+        medianBgTwo.UpdateBackground(current_frame);
+        medianBgImageOne = medianBgOne.GetBackgroundImage();
+        medianBgImageTwo = medianBgTwo.GetBackgroundImage();
+        imshow("video", current_frame);
+        imshow("Median One 1.01", medianBgImageOne);
+        imshow("Median Two 1.005", medianBgImageTwo);
         cvWaitKey(1);
     }
     return 0;
