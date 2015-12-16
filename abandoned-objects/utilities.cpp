@@ -26,6 +26,11 @@ void binary_closing_operation(Mat *image){
     morphologyEx(*image, *image, MORPH_CLOSE, five_by_five_element);
 }
 
+void binary_opening_operation(cv::Mat *image){
+    Mat five_by_five_element(5, 5, CV_8U, Scalar(1));
+    morphologyEx(*image, *image, MORPH_OPEN, five_by_five_element);
+}
+
 Mat back_project(Mat image, Mat colour_sample, int number_bins){
     // Back Projection
     ColourHistogram blue_hist = * new ColourHistogram(colour_sample, number_bins);

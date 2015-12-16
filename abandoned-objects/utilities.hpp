@@ -30,6 +30,8 @@ void otsu_threshold(cv::Mat *image);
 // can be used on a binary image
 void binary_closing_operation(cv::Mat *image);
 
+void binary_opening_operation(cv::Mat *image);
+
 // back projects the colour sample
 cv::Mat back_project(cv::Mat image, cv::Mat colour_sample, int number_bins);
 
