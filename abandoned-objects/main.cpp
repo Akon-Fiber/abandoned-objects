@@ -13,8 +13,8 @@
 #include "video.hpp"
 #include "world_object.hpp"
 
-#define MB_LEARN_RATE_ONE 1.008
-#define MB_LEARN_RATE_TWO 1.005
+#define MB_LEARN_RATE_ONE 1.001
+#define MB_LEARN_RATE_TWO 1.01
 #define MB_NUMBER_BINS 4
 #define MEDIAN_DIFFERENCE_THRESHOLD 50
 
@@ -24,7 +24,7 @@ using namespace cv;
 int find_objects(VideoCapture video, WorldObjectManager woManager, float learn_rate_one, float learn_rate_two, int bins);
 
 int main(int argc, const char * argv[]) {
-    string filename(VIDEO_TWO);
+    string filename(VIDEO_ONE);
     VideoCapture video = *new VideoCapture(filename);
     WorldObjectManager worldObjectManager = *new WorldObjectManager();
     int res = find_objects(video, worldObjectManager, MB_LEARN_RATE_ONE, MB_LEARN_RATE_TWO, MB_NUMBER_BINS);
@@ -56,7 +56,7 @@ int find_objects(VideoCapture video, WorldObjectManager woManager, float learn_r
         medianBgImageOne = medianBgOne.GetBackgroundImage();
         medianBgImageTwo = medianBgTwo.GetBackgroundImage();
         
-        // get the cleaned up binary difference image
+        // get the binary difference image
         absdiff(medianBgImageOne, medianBgImageTwo, medianDifference);
         cvtColor(medianDifference, medianDifference, CV_BGR2GRAY);
         threshold(medianDifference, medianDifference, MEDIAN_DIFFERENCE_THRESHOLD, 255, THRESH_BINARY);
@@ -72,7 +72,6 @@ int find_objects(VideoCapture video, WorldObjectManager woManager, float learn_r
         findContours(medianDifferenceTemp, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_NONE);
         medianDifferenceTemp.release();
         
-
         // update world object manager if there are detected object regions
         woManager.update(contours, i);
         woManager.drawCurrentObjectRegions(current_frame);
