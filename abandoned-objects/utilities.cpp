@@ -38,42 +38,6 @@ Mat back_project(Mat image, Mat colour_sample, int number_bins){
     return blue_hist.BackProject(image);
 }
 
-
-vector<Point2f> get_foreground_points(Mat binary_image){
-    // get contours
-    vector<vector<Point>> contours;
-    vector<Vec4i> hierarchy;
-    findContours(binary_image, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_NONE);
-    vector<Point2f> points(contours.size());
-    for(int i = 0; i < contours.size(); i++){
-        points[i] = get_centre(contours[i]);
-    }
-    return points;
-}
-
-Point2f get_centre(vector<Point> contour){
-    int sumX = 0, sumY = 0;
-    int size = (int)contour.size();
-    for(int i = 0; i < size; i++){
-        sumX += contour[i].x;
-        sumY += contour[i].y;
-    }
-    return Point2f(sumX / size, sumY / size);
-}
-
-vector<Rect> get_object_roi(Mat binary_image){
-    // get contours
-    vector<vector<Point>> contours;
-    vector<Vec4i> hierarchy;
-    findContours(binary_image, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_NONE);
-    vector<Rect> result;
-    for(int i = 0; i < (int)contours.size(); i++){
-        Rect roi = boundingRect(contours[i]);
-        result.push_back(roi);
-    }
-    return result;
-}
-
 /******* Image Display Functions ******************/
 
 void DisplayImage(Mat image, string message, int x, int y){

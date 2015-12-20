@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		637189CD1C25F9C300B51328 /* world_object.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 637189CB1C25F9C300B51328 /* world_object.cpp */; };
 		63938A0D1C16607D002A0A40 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63938A0C1C16607D002A0A40 /* main.cpp */; };
 		63938A151C166281002A0A40 /* utilities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63938A131C166281002A0A40 /* utilities.cpp */; };
 		63938A181C166576002A0A40 /* histogram.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63938A161C166576002A0A40 /* histogram.cpp */; };
@@ -26,6 +27,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		637189CB1C25F9C300B51328 /* world_object.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = world_object.cpp; sourceTree = "<group>"; };
+		637189CC1C25F9C300B51328 /* world_object.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = world_object.hpp; sourceTree = "<group>"; };
 		63938A091C16607D002A0A40 /* abandoned-objects */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "abandoned-objects"; sourceTree = BUILT_PRODUCTS_DIR; };
 		63938A0C1C16607D002A0A40 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		63938A131C166281002A0A40 /* utilities.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = utilities.cpp; sourceTree = "<group>"; };
@@ -73,6 +76,8 @@
 				63938A141C166281002A0A40 /* utilities.hpp */,
 				63938A191C166636002A0A40 /* video.cpp */,
 				63938A1A1C166636002A0A40 /* video.hpp */,
+				637189CB1C25F9C300B51328 /* world_object.cpp */,
+				637189CC1C25F9C300B51328 /* world_object.hpp */,
 			);
 			path = "abandoned-objects";
 			sourceTree = "<group>";
@@ -137,6 +142,7 @@
 				63938A1B1C166636002A0A40 /* video.cpp in Sources */,
 				63938A181C166576002A0A40 /* histogram.cpp in Sources */,
 				63938A0D1C16607D002A0A40 /* main.cpp in Sources */,
+				637189CD1C25F9C300B51328 /* world_object.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -297,6 +303,7 @@
 				63938A121C16607D002A0A40 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
