@@ -48,6 +48,14 @@ bool WorldObject::checkOverlap(Rect region){
     else return false;
 }
 
+bool WorldObject::checkAdjacency(cv::Rect region, int adjacencyDistance){
+    region.x = region.x - adjacencyDistance;
+    region.y = region.y - adjacencyDistance;
+    region.height = region.height + (adjacencyDistance * 2);
+    region.width = region.width + (adjacencyDistance * 2);
+    return this->checkOverlap(region);
+}
+
 int WorldObject::getFrameAppeared(){
     return frameAppeared;
 }
@@ -78,6 +86,13 @@ vector<Point> WorldObject::getContour(){
 
 void WorldObject::setContour(vector<Point> contour){
     this->contour = contour;
+}
+
+string WorldObject::toString(){
+    stringstream str;
+    str << "Location: " << this->getCentre() << " Area: " << to_string(getArea());
+    str << "FA: " << frameAppeared << "FL: " << frameLargest << " FD: " << frameDisappeared << endl;
+    return str.str();
 }
 
 /*** WorldObject ***/
@@ -128,6 +143,8 @@ void WorldObjectManager::update(std::vector<std::vector <cv::Point>> contours, i
     removeCurrentObjects(removeObjects);
     // remove objects that merged
     pruneCurrentObjects();
+    // merge any objects that appear adjacent to each other
+    mergeAdjacentCurrentObjects();
     // create new objects for contours that didn't overlap an existing object
     for(int i = 0; i < numberContours; i++){
         if(!contourMatchesObject[i]){
@@ -166,6 +183,43 @@ void WorldObjectManager::pruneCurrentObjects(){
     }
 }
 
+void WorldObjectManager::mergeAdjacentCurrentObjects(){
+    int numberCurrentObjects = (int)currentObjects.size();
+    for(int i = 0; i < numberCurrentObjects; i++){
+        vector<int> mergeObjectIndices; // vector to keep track of all the objects that are to be merged
+        mergeObjectIndices.push_back(i);
+        int mergeListFirstAppearedIndex = 0;
+        for(int j = i + 1; j < numberCurrentObjects; j++){
+            // check if the current object i is adjacent to the current object j
+            if(currentObjects[i].checkAdjacency(currentObjects[j].getRectRoi())){
+                cout << "adjacent" << endl;
+                mergeObjectIndices.push_back(j);
+                if(currentObjects[j].getFrameAppeared() < currentObjects[mergeObjectIndices[mergeListFirstAppearedIndex]].getFrameAppeared()){
+                    mergeListFirstAppearedIndex = (int)mergeObjectIndices.size() - 1;
+                }
+            }
+        }
+        // check if there are objects to merge before merging
+        if((int)mergeObjectIndices.size() > 1){
+            vector<Point> points; // a vector of all the points to merge into a convex shape
+            for(int i = 0; i < (int)mergeObjectIndices.size(); i++){
+                // get convex hull of each object to be merged
+                vector<Point> convexContourPoints;
+                convexHull(currentObjects[i].getContour(), convexContourPoints, true);
+                points.insert(points.end(), convexContourPoints.begin(), convexContourPoints.end());
+            }
+            // merge adjacent contours into a new convex polygon contour
+            vector<Point> newContour;
+            convexHull(Mat(points), newContour, true);
+            // update the first appeared object with a new contour and remove the merges objects
+            currentObjects[mergeObjectIndices[mergeListFirstAppearedIndex]].setContour(newContour);
+            mergeObjectIndices.erase(mergeObjectIndices.begin() + mergeListFirstAppearedIndex);
+            removeCurrentObjects(mergeObjectIndices, false);
+            numberCurrentObjects = (int)currentObjects.size();
+        }
+    }
+}
+
 void WorldObjectManager::drawCurrentObjectRegions(cv::Mat &image){
     for(int i = 0; i < (int)currentObjects.size(); i++){
         Rect roi = currentObjects[i].getRectRoi();
@@ -179,4 +233,12 @@ vector<WorldObject> WorldObjectManager::getCurrentObjects(){
 
 vector<WorldObject> WorldObjectManager::getProcessedObjects(){
     return processedObjects;
+}
+
+string WorldObjectManager::currentObjectsToString(){
+    stringstream str;
+    for(int i = 0; i < (int)currentObjects.size(); i++){
+        str << currentObjects[i].toString();
+    }
+    return str.str();
 }

@@ -24,7 +24,7 @@ using namespace cv;
 int find_objects(VideoCapture video, WorldObjectManager woManager, float learn_rate_one, float learn_rate_two, int bins);
 
 int main(int argc, const char * argv[]) {
-    string filename(VIDEO_ONE);
+    string filename(VIDEO_TWO);
     VideoCapture video = *new VideoCapture(filename);
     WorldObjectManager worldObjectManager = *new WorldObjectManager();
     int res = find_objects(video, worldObjectManager, MB_LEARN_RATE_ONE, MB_LEARN_RATE_TWO, MB_NUMBER_BINS);
@@ -75,6 +75,7 @@ int find_objects(VideoCapture video, WorldObjectManager woManager, float learn_r
         // update world object manager if there are detected object regions
         woManager.update(contours, i);
         woManager.drawCurrentObjectRegions(current_frame);
+        cout << woManager.currentObjectsToString();
         
         // Update Window
         writeText(current_frame, "Frame: " + to_string(i), 15, 10, Scalar(0, 255, 0));
@@ -82,17 +83,9 @@ int find_objects(VideoCapture video, WorldObjectManager woManager, float learn_r
         writeText(current_frame, "Processed Objects: " + to_string((int)woManager.getProcessedObjects().size()), 55, 10, Scalar(0, 255, 0));
         moveWindow("video", 0, 20);
         imshow("video", current_frame);
-        moveWindow("difference", current_frame.cols, 20);
+        moveWindow("difference", 0, current_frame.rows + 40);
         imshow("difference", medianDifference);
-        if((int)contours.size() != 0){
-            cvWaitKey(0);
-        }else{
-            cvWaitKey(1);
-        }
-        
-        for(int j = 0; j < (int)woManager.getCurrentObjects().size(); j++){
-            cout << "Object #" << j << " Location: " << woManager.getCurrentObjects()[j].getCentre() << " Area: " << woManager.getCurrentObjects()[j].getArea() << " Frame Found: " << woManager.getCurrentObjects()[j].getFrameAppeared() << " STATUS:" << woManager.getCurrentObjects()[j].status << endl;
-        }
+        cvWaitKey(1);
     }
     return 0;
 }

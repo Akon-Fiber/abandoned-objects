@@ -14,6 +14,8 @@
 #include "opencv2/core.hpp"
 #include "opencv2/opencv.hpp"
 
+#define WORLD_OBJECT_ADJACENCY_DISTANCE 3
+
 enum WO_TYPE {OBJ_ABANDONED, OBJ_REMOVED, OBJ_UNKNOWN};
 enum WO_STATUS {OBJ_GROWING, OBJ_SHRINKING, OBJ_SAME_SIZE, OBJ_GONE};
 
@@ -44,6 +46,9 @@ public:
     
     bool checkOverlap(cv::Rect region);
     
+    // checks if another region is adjacent within the distance supplied
+    bool checkAdjacency(cv::Rect region, int adjacencyDistance=WORLD_OBJECT_ADJACENCY_DISTANCE);
+    
     // get and set
     
     int getFrameAppeared();
@@ -61,6 +66,8 @@ public:
     std::vector<cv::Point> getContour();
     
     void setContour(std::vector<cv::Point> contour);
+    
+    std::string toString();
 };
 
 class WorldObjectManager{
@@ -73,6 +80,9 @@ private:
     
     // removes extra merged objects. Keeps objects which occured first
     void pruneCurrentObjects();
+    
+    // merges all adjacent currently visible objects
+    void mergeAdjacentCurrentObjects();
 public:
     WorldObjectManager();
     
@@ -86,6 +96,8 @@ public:
     std::vector<WorldObject> getCurrentObjects();
     
     std::vector<WorldObject> getProcessedObjects();
+    
+    std::string currentObjectsToString();
 };
 
 #endif /* world_object_hpp */
