@@ -28,7 +28,7 @@ void drawOpticalFlow(Mat& optical_flow, Mat& display, int spacing, Scalar passed
 
 #define MAX_FEATURES 400
 void LucasKanadeOpticalFlow(Mat& previous_gray_frame, Mat& gray_frame, Mat& display_image){
-    Size img_sz = previous_gray_frame.size();
+    //Size img_sz = previous_gray_frame.size();
     int win_size = 10;
     cvtColor(previous_gray_frame, display_image, CV_GRAY2BGR);
     vector<Point2f> previous_features, current_features;

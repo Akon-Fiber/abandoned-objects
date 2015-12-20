@@ -49,12 +49,12 @@ void Histogram::Draw1DHistogram( MatND histograms[], int number_of_histograms, M
     int highest_point = static_cast<int>(0.9*((float)number_of_bins)*scaling_factor);
     for (int channel=0; (channel < number_of_histograms); channel++)
     {
-        int last_height;
+        int last_height = 0;
         for( int h = 0; h < number_of_bins; h++ )
         {
             float value = histograms[channel].at<float>(h);
             int height = static_cast<int>(value*highest_point/max_value);
-            int where = (int)(((float)h)*scaling_factor);
+            //int where = (int)(((float)h)*scaling_factor);
             if (h > 0)
                 line(histogram_image,Point((int)(((float)(h-1))*scaling_factor)+1,(int)(((float)number_of_bins)*scaling_factor)-last_height),
                      Point((int)(((float)h)*scaling_factor)+1,(int)(((float)number_of_bins)*scaling_factor)-height),
@@ -76,7 +76,7 @@ void OneDHistogram::ComputeHistogram(){
     for (int channel=0; (channel < mNumberChannels); channel++)
     {
         const float* channel_ranges = mChannelRange;
-        int *mch = {0};
+        //int *mch = {0};
         calcHist(&(image_planes[channel]), 1, mChannelNumbers, Mat(), mHistogram[channel], 1 , mNumberBins, &channel_ranges);
     }
 }
@@ -197,7 +197,7 @@ Mat kmeans_clustering( Mat& image, int k, int iterations )
     CV_Assert( image.type() == CV_8UC3 );
     // Populate an n*3 array of float for each of the n pixels in the image
     Mat samples(image.rows*image.cols, image.channels(), CV_32F);
-    float* sample = samples.ptr<float>(0);
+    //float* sample = samples.ptr<float>(0);
     for(int row=0; row<image.rows; row++)
         for(int col=0; col<image.cols; col++)
             for (int channel=0; channel < image.channels(); channel++)
