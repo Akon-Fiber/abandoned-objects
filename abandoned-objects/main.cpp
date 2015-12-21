@@ -53,6 +53,7 @@ void compute_metrics(WorldObjectManager &woManager, SystemPerf &groundTruth);
 int main(int argc, const char * argv[]) {
     setup_ground_truth_events();
     for(int i = 0; i < NUMBER_VIDEOS; i++){
+        cout << "Video #" << i + 1 << endl;
         VideoCapture video = *new VideoCapture(ground_truth[i].getVideoFile());
         observed_truth[i] = *new WorldObjectManager();
         int res = find_objects(video, observed_truth[i], MB_LEARN_RATE_ONE, MB_LEARN_RATE_TWO, MB_NUMBER_BINS);
@@ -60,6 +61,7 @@ int main(int argc, const char * argv[]) {
             return -1;
         }
         compute_metrics(observed_truth[i], ground_truth[i]);
+        cout << endl << endl;
     }
     return 0;
 }
@@ -94,7 +96,7 @@ void compute_metrics(WorldObjectManager &observed_truth, SystemPerf &ground_trut
             ground_truth.basicMetric.falseNegatives++;
         }
     }
-    cout << ground_truth.basicMetric.toString() << endl;
+    cout << endl << "Basic Metric:" << endl << ground_truth.basicMetric.toString();
     
     // compute dice coefficient
     for(int i = 0; i < groundTruthEvents; i++){
@@ -109,11 +111,45 @@ void compute_metrics(WorldObjectManager &observed_truth, SystemPerf &ground_trut
             }
             int medianIndex = (int) diceCoeffVector.size()/2;
             ground_truth.events[i].medianDiceCoefficient = diceCoeffVector[medianIndex];
-            cout << "Dice coefficient: " << ground_truth.getEvents()[i].medianDiceCoefficient << endl;
+            ground_truth.averageDiceCoefficient += ground_truth.events[i].medianDiceCoefficient;
+            cout << "Dice coefficient event #" << i + 1 << " : " << ground_truth.getEvents()[i].medianDiceCoefficient << endl;
         }
     }
+    // get average dice coefficient
+    ground_truth.averageDiceCoefficient =  (float)(ground_truth.averageDiceCoefficient / (int)observed_truth.getProcessedObjects().size());
+    cout << "Average Dice Coefficient: " << ground_truth.averageDiceCoefficient << endl;
     
+    // compute time to event
+    for(int i = 0; i < groundTruthEvents; i++){
+        if(groundTruthObservedEvents[i] != -1){
+            int frameObjectAppeared = observed_truth.getProcessedObjects()[groundTruthObservedEvents[i]].getFrameAppeared();
+            int frameEvent = ground_truth.events[i].getFrameIndex();
+            int frameDiff = frameObjectAppeared - frameEvent;
+            float time = (float)(1.0/(float)ground_truth.frameRate) * (float)frameDiff;
+            ground_truth.events[i].timeToEvent = time;
+        }
+        cout << "Time to event #" << i+1 << ": "<< ground_truth.events[i].timeToEvent << endl;
+    }
     
+    // compute recognition of event metrics
+    ground_truth.eventMetric.truePositives = ground_truth.basicMetric.truePositives;
+    ground_truth.eventMetric.trueNegatives = ground_truth.basicMetric.trueNegatives;
+    ground_truth.eventMetric.falsePositives = ground_truth.basicMetric.falsePositives;
+    ground_truth.eventMetric.falseNegatives = ground_truth.basicMetric.falseNegatives;
+    for(int i = 0; i < groundTruthEvents; i++){
+        if(groundTruthObservedEvents[i] != -1){
+            WorldObject obj = observed_truth.getProcessedObjects()[groundTruthObservedEvents[i]];
+            if(obj.type == OBJ_ABANDONED && ground_truth.events[i].getEventType() == EVENT_ABANDONED){
+                // ok
+            }else if(obj.type == OBJ_REMOVED && ground_truth.events[i].getEventType() == EVENT_REMOVED){
+                // ok
+            }else{
+                ground_truth.eventMetric.falseNegatives++;
+                ground_truth.eventMetric.truePositives--;
+            }
+        }
+    }
+    cout << "Event Metric:" << endl << ground_truth.eventMetric.toString();
 }
 
 int find_objects(VideoCapture video, WorldObjectManager &woManager, float learn_rate_one, float learn_rate_two, int bins){
