@@ -15,9 +15,9 @@
 #include "opencv2/opencv.hpp"
 
 #define WORLD_OBJECT_ADJACENCY_DISTANCE 3
-#define EXPANDED_ROI_EDGE_DETECTION_DISTANCE 10
-#define EDGE_DETECTION_LOW_THRESHOLD 80
-#define EDGE_DETECTION_HIGH_THRESHOLD 220
+#define EXPANDED_ROI_EDGE_DETECTION_DISTANCE 15
+#define EDGE_DETECTION_LOW_THRESHOLD 200
+#define EDGE_DETECTION_HIGH_THRESHOLD 255
 
 enum WO_TYPE {OBJ_ABANDONED, OBJ_REMOVED, OBJ_UNKNOWN};
 enum WO_STATUS {OBJ_GROWING, OBJ_SHRINKING, OBJ_SAME_SIZE, OBJ_GONE};
@@ -85,7 +85,7 @@ private:
     std::vector<WorldObject> processedObjects;
     
     // removes elements from currentObjects at the indices passed into the function
-    void removeCurrentObjects(std::vector<int> indices, bool moveToProcessed=true);
+    void removeCurrentObjects(std::vector<int> indices);
     
     // removes extra merged objects. Keeps objects which occured first
     void pruneCurrentObjects();
@@ -94,7 +94,7 @@ private:
     void mergeAdjacentCurrentObjects(cv::Mat currentFrameImage);
     
     // processes the passed object to determine whether it is abandoned or removed
-    void processObject(WorldObject object);
+    void processObject(WorldObject object, cv::Mat currentFrameImage);
 public:
     
     WorldObjectManager();

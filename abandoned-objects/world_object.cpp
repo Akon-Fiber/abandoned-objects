@@ -134,6 +134,7 @@ void WorldObjectManager::update(std::vector<std::vector <cv::Point>> contours, M
             // mark object as gone
             currentObjects[i].status = OBJ_GONE;
             currentObjects[i].setFrameDisappeared(referenceIndex);
+            processObject(currentObjects[i], currentFrameImage);
             removeObjects.push_back(i);
         }
         else{
@@ -167,12 +168,9 @@ void WorldObjectManager::update(std::vector<std::vector <cv::Point>> contours, M
     }
 }
 
-void WorldObjectManager::removeCurrentObjects(vector<int> indices, bool moveToProcessed){
+void WorldObjectManager::removeCurrentObjects(vector<int> indices){
     sort(indices.begin(), indices.end());
     for(int i = (int)indices.size() - 1; i >= 0; i--){
-        if(moveToProcessed){
-            processObject(currentObjects[indices[i]]);
-        }
         currentObjects.erase(currentObjects.begin() + indices[i]);
     }
 }
@@ -192,7 +190,7 @@ void WorldObjectManager::pruneCurrentObjects(){
             }
         }
         mergedObjectIndices.erase(mergedObjectIndices.begin() + earliestAppearedIndex);
-        removeCurrentObjects(mergedObjectIndices, false);
+        removeCurrentObjects(mergedObjectIndices);
         numberCurrentObjects = (int)currentObjects.size();
     }
 }
@@ -227,35 +225,48 @@ void WorldObjectManager::mergeAdjacentCurrentObjects(Mat currentFrameImage){
             // update the first appeared object with a new contour and remove the merges objects
             WorldObject *mergedObject = &currentObjects[mergeObjectIndices[mergeListFirstAppearedIndex]];
             mergedObject->setContour(newContour);
+            // updates the object image
             mergedObject->setObjectImageRegion(currentFrameImage(increaseRectSize(mergedObject->getRectRoi(), EXPANDED_ROI_EDGE_DETECTION_DISTANCE)));
             mergeObjectIndices.erase(mergeObjectIndices.begin() + mergeListFirstAppearedIndex);
-            removeCurrentObjects(mergeObjectIndices, false);
+            removeCurrentObjects(mergeObjectIndices);
             numberCurrentObjects = (int)currentObjects.size();
         }
     }
 }
 
-void WorldObjectManager::processObject(WorldObject object){
+void WorldObjectManager::processObject(WorldObject object, Mat currentFrameImage){
     Mat originalImageRegion = originalBackgroundImage(increaseRectSize(object.getRectRoi(), EXPANDED_ROI_EDGE_DETECTION_DISTANCE));
     Mat objectImageRegion = object.getObjectImageRegion();
     cvtColor(originalImageRegion, originalImageRegion, CV_BGR2GRAY);
-    imshow("this", originalImageRegion);
-    cvWaitKey(0);
+    imshow("gray1", originalImageRegion);
     cvtColor(objectImageRegion, objectImageRegion, CV_BGR2GRAY);
-    imshow("this", objectImageRegion);
-    cvWaitKey(0);
+    imshow("gray2", objectImageRegion);
     Canny(originalImageRegion, originalImageRegion, EDGE_DETECTION_LOW_THRESHOLD, EDGE_DETECTION_HIGH_THRESHOLD);
-    imshow("this", originalImageRegion);
-    cvWaitKey(0);
+    imshow("bin1", originalImageRegion);
     Canny(objectImageRegion, objectImageRegion, EDGE_DETECTION_LOW_THRESHOLD, EDGE_DETECTION_HIGH_THRESHOLD);
-    imshow("this", objectImageRegion);
+    imshow("bin2", objectImageRegion);
     cvWaitKey(0);
-    if(countNonZero(originalImageRegion) > countNonZero(objectImageRegion)){
+    cvDestroyAllWindows();
+    // get connected components first image
+    vector<vector <Point>> contoursOriginalImage;
+    vector<Vec4i> hierarchyOriginalImage;
+    findContours(originalImageRegion, contoursOriginalImage, hierarchyOriginalImage, CV_RETR_TREE, CV_CHAIN_APPROX_NONE);
+    // get connected components second image
+    vector<vector <Point>> contoursObjectImage;
+    vector<Vec4i> hierarchyObjectImage;
+    findContours(objectImageRegion, contoursObjectImage, hierarchyObjectImage, CV_RETR_TREE, CV_CHAIN_APPROX_NONE);
+    int originalImageEdges = (int)contoursOriginalImage.size();
+    int objectImageEdges = (int)contoursObjectImage.size();
+    if(originalImageEdges > objectImageEdges){
         object.type = OBJ_REMOVED;
     }else{
         object.type = OBJ_ABANDONED;
     }
+    cout << originalImageEdges << " : " << objectImageEdges << endl;
+    // updates the world object manager background image after the object becomes part of the background
     processedObjects.push_back(object);
+    this->originalBackgroundImage.release();
+    this->originalBackgroundImage = currentFrameImage;
 }
 
 void WorldObjectManager::drawCurrentObjectRegions(cv::Mat &image){

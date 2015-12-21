@@ -52,4 +52,7 @@ bool load_image(std::string filename, cv::Mat *image);
 // increases the rect by given size evenly on its length and width
 cv::Rect increaseRectSize(cv::Rect rect, int size);
 
+// decreases the rect by given size evenly on its length and width
+cv::Rect decreaseRectSize(cv::Rect rect, int size);
+
 #endif /* utilities_hpp */
