@@ -15,6 +15,9 @@
 #include "opencv2/opencv.hpp"
 
 #define WORLD_OBJECT_ADJACENCY_DISTANCE 3
+#define EXPANDED_ROI_EDGE_DETECTION_DISTANCE 10
+#define EDGE_DETECTION_LOW_THRESHOLD 80
+#define EDGE_DETECTION_HIGH_THRESHOLD 220
 
 enum WO_TYPE {OBJ_ABANDONED, OBJ_REMOVED, OBJ_UNKNOWN};
 enum WO_STATUS {OBJ_GROWING, OBJ_SHRINKING, OBJ_SAME_SIZE, OBJ_GONE};
@@ -22,6 +25,7 @@ enum WO_STATUS {OBJ_GROWING, OBJ_SHRINKING, OBJ_SAME_SIZE, OBJ_GONE};
 // class that represents a world object as it appears and disappears from a video sequence
 class WorldObject{
 private:
+    cv::Mat objectImageRegion;
     std::vector<cv::Point> contour;
     int frameAppeared = 0;
     int frameLargest = 0;
@@ -51,6 +55,10 @@ public:
     
     // get and set
     
+    cv::Mat getObjectImageRegion();
+    
+    void setObjectImageRegion(cv::Mat objectImageRegion);
+    
     int getFrameAppeared();
     
     void setFrameAppeared(int frame);
@@ -72,6 +80,7 @@ public:
 
 class WorldObjectManager{
 private:
+    cv::Mat originalBackgroundImage;
     std::vector<WorldObject> currentObjects;
     std::vector<WorldObject> processedObjects;
     
@@ -82,14 +91,20 @@ private:
     void pruneCurrentObjects();
     
     // merges all adjacent currently visible objects
-    void mergeAdjacentCurrentObjects();
+    void mergeAdjacentCurrentObjects(cv::Mat currentFrameImage);
+    
+    // processes the passed object to determine whether it is abandoned or removed
+    void processObject(WorldObject object);
 public:
+    
     WorldObjectManager();
+    
+    WorldObjectManager(cv::Mat originalBackgroundImage);
     
     // updates all the world objects
     // It will add remove disapeared objects, add new objects, merge objects
     // It will also update whether an object is growing or shrinking
-    void update(std::vector<std::vector <cv::Point>> contours, int referenceIndex);
+    void update(std::vector<std::vector <cv::Point>> contours, cv::Mat currentFrameImage, int currentFrameIndex);
     
     void drawCurrentObjectRegions(cv::Mat &image);
     
@@ -98,6 +113,10 @@ public:
     std::vector<WorldObject> getProcessedObjects();
     
     std::string currentObjectsToString();
+    
+    std::string processedObjectsToString();
+    
+    void setOriginalBackgroundImage(cv::Mat originalBackgroundImage);
 };
 
 #endif /* world_object_hpp */

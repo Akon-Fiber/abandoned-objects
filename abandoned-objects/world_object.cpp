@@ -7,6 +7,7 @@
 //
 
 #include "world_object.hpp"
+#include "utilities.hpp"
 #include "opencv2/imgproc.hpp"
 #include "opencv2/highgui.hpp"
 
@@ -56,6 +57,14 @@ bool WorldObject::checkAdjacency(cv::Rect region, int adjacencyDistance){
     return this->checkOverlap(region);
 }
 
+cv::Mat WorldObject::getObjectImageRegion(){
+    return this->objectImageRegion;
+}
+
+void WorldObject::setObjectImageRegion(cv::Mat objectImageRegion){
+    this->objectImageRegion = objectImageRegion;
+}
+
 int WorldObject::getFrameAppeared(){
     return frameAppeared;
 }
@@ -91,7 +100,7 @@ void WorldObject::setContour(vector<Point> contour){
 string WorldObject::toString(){
     stringstream str;
     str << "Top Left: " << this->getRectRoi().tl() << " Bottom Right: " << this->getRectRoi().br() << " Area: " << to_string(getArea());
-    str << " FA: " << frameAppeared << " FL: " << frameLargest << " FD: " << frameDisappeared << endl;
+    str << " FA: " << frameAppeared << " FL: " << frameLargest << " FD: " << frameDisappeared << " Type: " << type << endl;
     return str.str();
 }
 
@@ -99,7 +108,11 @@ string WorldObject::toString(){
 
 WorldObjectManager::WorldObjectManager(){}
 
-void WorldObjectManager::update(std::vector<std::vector <cv::Point>> contours, int referenceIndex){
+WorldObjectManager::WorldObjectManager(Mat originalBackgroundImage){
+    this->originalBackgroundImage = originalBackgroundImage;
+}
+
+void WorldObjectManager::update(std::vector<std::vector <cv::Point>> contours, Mat currentFrameImage, int referenceIndex){
     int numberCurrentObjects = (int)currentObjects.size();
     int numberContours = (int)contours.size();
     // check which objects have overlapping contours and which contours overlap on objects
@@ -133,6 +146,7 @@ void WorldObjectManager::update(std::vector<std::vector <cv::Point>> contours, i
                 currentObjects[i].status = OBJ_GROWING;
                 currentObjects[i].setContour(matchingContour);
                 currentObjects[i].setFrameLargest(referenceIndex);
+                currentObjects[i].setObjectImageRegion(currentFrameImage(increaseRectSize(currentObjects[i].getRectRoi(), EXPANDED_ROI_EDGE_DETECTION_DISTANCE)));
             }else{
                 // object is staying the same size
                 currentObjects[i].status = OBJ_SAME_SIZE;
@@ -144,7 +158,7 @@ void WorldObjectManager::update(std::vector<std::vector <cv::Point>> contours, i
     // remove objects that merged
     pruneCurrentObjects();
     // merge any objects that appear adjacent to each other
-    mergeAdjacentCurrentObjects();
+    mergeAdjacentCurrentObjects(currentFrameImage);
     // create new objects for contours that didn't overlap an existing object
     for(int i = 0; i < numberContours; i++){
         if(!contourMatchesObject[i]){
@@ -157,7 +171,7 @@ void WorldObjectManager::removeCurrentObjects(vector<int> indices, bool moveToPr
     sort(indices.begin(), indices.end());
     for(int i = (int)indices.size() - 1; i >= 0; i--){
         if(moveToProcessed){
-            processedObjects.push_back(currentObjects[i]);
+            processObject(currentObjects[indices[i]]);
         }
         currentObjects.erase(currentObjects.begin() + indices[i]);
     }
@@ -183,7 +197,7 @@ void WorldObjectManager::pruneCurrentObjects(){
     }
 }
 
-void WorldObjectManager::mergeAdjacentCurrentObjects(){
+void WorldObjectManager::mergeAdjacentCurrentObjects(Mat currentFrameImage){
     int numberCurrentObjects = (int)currentObjects.size();
     for(int i = 0; i < numberCurrentObjects; i++){
         vector<int> mergeObjectIndices; // vector to keep track of all the objects that are to be merged
@@ -211,12 +225,37 @@ void WorldObjectManager::mergeAdjacentCurrentObjects(){
             vector<Point> newContour;
             convexHull(Mat(points), newContour, true);
             // update the first appeared object with a new contour and remove the merges objects
-            currentObjects[mergeObjectIndices[mergeListFirstAppearedIndex]].setContour(newContour);
+            WorldObject *mergedObject = &currentObjects[mergeObjectIndices[mergeListFirstAppearedIndex]];
+            mergedObject->setContour(newContour);
+            mergedObject->setObjectImageRegion(currentFrameImage(increaseRectSize(mergedObject->getRectRoi(), EXPANDED_ROI_EDGE_DETECTION_DISTANCE)));
             mergeObjectIndices.erase(mergeObjectIndices.begin() + mergeListFirstAppearedIndex);
             removeCurrentObjects(mergeObjectIndices, false);
             numberCurrentObjects = (int)currentObjects.size();
         }
     }
+}
+
+void WorldObjectManager::processObject(WorldObject object){
+    Mat originalImageRegion = originalBackgroundImage(increaseRectSize(object.getRectRoi(), EXPANDED_ROI_EDGE_DETECTION_DISTANCE));
+    Mat objectImageRegion = object.getObjectImageRegion();
+    cvtColor(originalImageRegion, originalImageRegion, CV_BGR2GRAY);
+    imshow("this", originalImageRegion);
+    cvWaitKey(0);
+    cvtColor(objectImageRegion, objectImageRegion, CV_BGR2GRAY);
+    imshow("this", objectImageRegion);
+    cvWaitKey(0);
+    Canny(originalImageRegion, originalImageRegion, EDGE_DETECTION_LOW_THRESHOLD, EDGE_DETECTION_HIGH_THRESHOLD);
+    imshow("this", originalImageRegion);
+    cvWaitKey(0);
+    Canny(objectImageRegion, objectImageRegion, EDGE_DETECTION_LOW_THRESHOLD, EDGE_DETECTION_HIGH_THRESHOLD);
+    imshow("this", objectImageRegion);
+    cvWaitKey(0);
+    if(countNonZero(originalImageRegion) > countNonZero(objectImageRegion)){
+        object.type = OBJ_REMOVED;
+    }else{
+        object.type = OBJ_ABANDONED;
+    }
+    processedObjects.push_back(object);
 }
 
 void WorldObjectManager::drawCurrentObjectRegions(cv::Mat &image){
@@ -236,8 +275,26 @@ vector<WorldObject> WorldObjectManager::getProcessedObjects(){
 
 string WorldObjectManager::currentObjectsToString(){
     stringstream str;
-    for(int i = 0; i < (int)currentObjects.size(); i++){
-        str << currentObjects[i].toString();
+    if((int)currentObjects.size() != 0){
+        str << "Current Objects: " << endl;
+        for(int i = 0; i < (int)currentObjects.size(); i++){
+            str << currentObjects[i].toString();
+        }
     }
     return str.str();
+}
+
+std::string WorldObjectManager::processedObjectsToString(){
+    stringstream str;
+    if((int) processedObjects.size()){
+        str << "Processed Objects: " << endl;
+        for(int i = 0; i < (int)processedObjects.size(); i++){
+            str << processedObjects[i].toString();
+        }
+    }
+    return str.str();
+}
+
+void WorldObjectManager::setOriginalBackgroundImage(cv::Mat originalBackgroundImage){
+    this->originalBackgroundImage = originalBackgroundImage;
 }

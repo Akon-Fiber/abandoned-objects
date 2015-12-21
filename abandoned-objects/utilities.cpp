@@ -93,3 +93,12 @@ bool load_image(string filename, Mat *image){
         return true;
     }
 }
+
+Rect increaseRectSize(Rect rect, int size){
+    Rect newRect;
+    newRect.x = rect.x - (size / 2);
+    newRect.y = rect.y - (size / 2);
+    newRect.height = rect.height + (size / 2);
+    newRect.width = rect.width + (size / 2);
+    return newRect;
+}

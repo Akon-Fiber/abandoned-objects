@@ -40,13 +40,14 @@ int find_objects(VideoCapture video, WorldObjectManager woManager, float learn_r
     }
     Mat current_frame, medianBgImageOne, medianBgImageTwo, medianDifference;
     video.retrieve(current_frame);
+    woManager.setOriginalBackgroundImage(current_frame.clone());
     MedianBackground medianBgOne = MedianBackground(current_frame, learn_rate_one, bins);
     MedianBackground medianBgTwo = MedianBackground(current_frame, learn_rate_two, bins);
     namedWindow("video");
     namedWindow("difference");
     for(int i = 0; i < (int)video.get(CV_CAP_PROP_FRAME_COUNT); i++){
         
-        // updates the current frame and retrieve it
+        // updates the current frame and retrieves it
         video.set(CV_CAP_PROP_POS_FRAMES, i);
         video.retrieve(current_frame);
         
@@ -73,9 +74,9 @@ int find_objects(VideoCapture video, WorldObjectManager woManager, float learn_r
         medianDifferenceTemp.release();
         
         // update world object manager if there are detected object regions
-        woManager.update(contours, i);
+        woManager.update(contours, current_frame.clone(), i);
         woManager.drawCurrentObjectRegions(current_frame);
-        cout << woManager.currentObjectsToString();
+//        cout << woManager.currentObjectsToString();
         
         // Update Window
         writeText(current_frame, "Frame: " + to_string(i), 15, 10, Scalar(0, 255, 0));
@@ -87,5 +88,11 @@ int find_objects(VideoCapture video, WorldObjectManager woManager, float learn_r
         imshow("difference", medianDifference);
         cvWaitKey(1);
     }
+    // updates the world object manager if the video ends while there were still contours.
+    if((int)woManager.getCurrentObjects().size() > 0){
+        vector<vector<Point>> empty;
+        woManager.update(empty, current_frame.clone(), (int)video.get(CV_CAP_PROP_FRAME_COUNT));
+    }
+    cout << woManager.processedObjectsToString();
     return 0;
 }

@@ -49,4 +49,7 @@ void writeText( cv::Mat image, std::string text, int row, int column, cv::Scalar
 
 bool load_image(std::string filename, cv::Mat *image);
 
+// increases the rect by given size evenly on its length and width
+cv::Rect increaseRectSize(cv::Rect rect, int size);
+
 #endif /* utilities_hpp */
