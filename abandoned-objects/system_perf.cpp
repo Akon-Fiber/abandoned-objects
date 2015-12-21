@@ -73,10 +73,11 @@ void VideoEvent::setRoi(Rect roi){
     this->roi = roi;
 }
 
-float VideoEvent::getOverlap(Rect roi){
+float VideoEvent::setOverlap(Rect roi){
     if(this->roi.area() != 0){
         int overlapArea = (this->roi & roi).area();
-        return (float)overlapArea / (float)this->roi.area();
+        this->overlap = (float)overlapArea / (float)this->roi.area();
+        return this->overlap;
     }else{
         return 0.0;
     }

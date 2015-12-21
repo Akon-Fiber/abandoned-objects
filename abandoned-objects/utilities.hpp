@@ -46,4 +46,6 @@ cv::Rect increaseRectSize(cv::Rect rect, int size);
 // decreases the rect by given size evenly on its length and width
 cv::Rect decreaseRectSize(cv::Rect rect, int size);
 
+int getOverlapArea(cv::Rect rect1, cv::Rect rect2);
+
 #endif /* utilities_hpp */

@@ -57,12 +57,12 @@ bool WorldObject::checkAdjacency(cv::Rect region, int adjacencyDistance){
     return this->checkOverlap(region);
 }
 
-void WorldObject::updateAreaVector(){
-    this->areaVector.push_back(this->getArea());
+void WorldObject::updateRoiVector(){
+    this->roiVector.push_back(this->getRectRoi());
 }
 
-vector<double> WorldObject::getAreaVector(){
-    return this->areaVector;
+vector<Rect> WorldObject::getRoiVector(){
+    return this->roiVector;
 }
 
 cv::Mat WorldObject::getObjectImageRegion(){
@@ -142,7 +142,7 @@ void WorldObjectManager::update(std::vector<std::vector <cv::Point>> contours, M
             // mark object as gone
             currentObjects[i].status = OBJ_GONE;
             currentObjects[i].setFrameDisappeared(referenceIndex);
-            currentObjects[i].updateAreaVector();
+            currentObjects[i].updateRoiVector();
             processObject(currentObjects[i], currentFrameImage);
             removeObjects.push_back(i);
         }
@@ -177,7 +177,7 @@ void WorldObjectManager::update(std::vector<std::vector <cv::Point>> contours, M
     }
     // update the area vector of each world object
     for(int i = 0; i < (int)currentObjects.size(); i++){
-        currentObjects[i].updateAreaVector();
+        currentObjects[i].updateRoiVector();
     }
 }
 

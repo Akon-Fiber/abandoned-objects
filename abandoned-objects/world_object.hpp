@@ -27,7 +27,7 @@ class WorldObject{
 private:
     cv::Mat objectImageRegion;
     std::vector<cv::Point> contour;
-    std::vector<double> areaVector;
+    std::vector<cv::Rect> roiVector;
     int frameAppeared = 0;
     int frameLargest = 0;
     int frameDisappeared = 0;
@@ -57,10 +57,10 @@ public:
     // get and set
     
     // updates the area vector by adding on another element of the current area
-    void updateAreaVector();
+    void updateRoiVector();
     
     // returns the area vector
-    std::vector<double> getAreaVector();
+    std::vector<cv::Rect> getRoiVector();
     
     cv::Mat getObjectImageRegion();
     

@@ -111,3 +111,8 @@ Rect decreaseRectSize(Rect rect, int size){
     newRect.width = rect.width - size;
     return newRect;
 }
+
+int getOverlapArea(Rect rect1, Rect rect2){
+    Rect intersection = rect1 & rect2;
+    return intersection.area();
+}

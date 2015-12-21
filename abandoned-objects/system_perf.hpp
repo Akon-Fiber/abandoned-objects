@@ -61,6 +61,10 @@ private:
     EVENT_TYPE type;
     cv::Rect roi;
 public:
+    float overlap;
+    float medianDiceCoefficient;
+    float meanDiceCoefficient;
+    
     VideoEvent();
     
     VideoEvent(int frameIndex, EVENT_TYPE type, cv::Rect roi);
@@ -77,7 +81,7 @@ public:
     
     void setRoi(cv::Rect roi);
     
-    float getOverlap(cv::Rect roi);
+    float setOverlap(cv::Rect roi);
 };
 
 class SystemPerf{
@@ -85,9 +89,12 @@ private:
     std::string videoFile;
     int frameRate;
     int numberFrames;
-    std::vector<VideoEvent> events;
+    
 public:
+    std::vector<VideoEvent> events;
+
     SystemPerfMetric basicMetric;
+    SystemPerfMetric eventMetric;
     
     SystemPerf(std::string videoFile, int frameRate, int numberFrames);
     

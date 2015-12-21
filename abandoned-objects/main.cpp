@@ -48,6 +48,8 @@ void setup_ground_truth_events(){
     ground_truth[VIDEO_TWO_INDEX].addEvent(eventTwo);
 }
 
+void compute_metrics(WorldObjectManager &woManager, SystemPerf &groundTruth);
+
 int main(int argc, const char * argv[]) {
     setup_ground_truth_events();
     for(int i = 0; i < NUMBER_VIDEOS; i++){
@@ -57,57 +59,61 @@ int main(int argc, const char * argv[]) {
         if(res == -1){
             return -1;
         }
-        int groundTruthEvents = (int)ground_truth[i].getEvents().size();
-        int observedTruthEvents = (int)observed_truth[i].getProcessedObjects().size();
-        int groundTruthObservedEvents[groundTruthEvents];
-        fill_n(groundTruthObservedEvents, groundTruthEvents, -1);
-        int lastObservedEvent = 0;
-        for(int j = 0; j < groundTruthEvents; j++){
-            bool foundMatch = false;
-            for(; lastObservedEvent < observedTruthEvents && !foundMatch; lastObservedEvent++){
-                float overlap = ground_truth[i].getEvents()[j].getOverlap(observed_truth[i].getProcessedObjects()[lastObservedEvent].getRectRoi());
-                if(overlap){
-                    groundTruthObservedEvents[j] = lastObservedEvent;
-                    ground_truth[i].basicMetric.truePositives++;
-                    foundMatch = true;
-                }
-            }
-            if(!foundMatch)
-                ground_truth[i].basicMetric.falseNegatives++;
-        }
-        int lastGroundTruth = 0;
-        for(int j = 0; j < observedTruthEvents; j++){
-            for(; lastGroundTruth < groundTruthEvents; lastGroundTruth++){
-                if(groundTruthObservedEvents[lastGroundTruth] == j){
-                    lastGroundTruth++;
-                    break;
-                }
-                ground_truth[i].basicMetric.falseNegatives++;
-            }
-        }
-//        bool foundGroundTruth[groundTruthEvents];
-//        fill_n(foundGroundTruth, groundTruthEvents, false);
-//        int lastMatchedObservedEvent = 0;
-//        for(int j = 0; j < groundTruthEvents; j++){
-//            for(int k = lastMatchedObservedEvent; k < observedTruthEvents; k++){
-//                if(ground_truth[i].getEvents()[j].getOverlap(observed_truth[i].getProcessedObjects()[k].getRectRoi()) != 0.0){
-//                    foundGroundTruth[j] = true;
-//                    ground_truth[i].basicMetric.truePositives++;
-//                    lastMatchedObservedEvent = k;
-//                }else{
-//                    ground_truth[i].basicMetric.falsePositives++;
-//                    lastMatchedObservedEvent = k;
-//                }
-//            }
-//        }
-//        for(int j = 0; j < groundTruthEvents; j++){
-//            if(!foundGroundTruth[j]){
-//                ground_truth[i].basicMetric.falseNegatives++;
-//            }
-//        }
-        cout << ground_truth[i].basicMetric.toString() << endl;
+        compute_metrics(observed_truth[i], ground_truth[i]);
     }
     return 0;
+}
+
+void compute_metrics(WorldObjectManager &observed_truth, SystemPerf &ground_truth){
+    // compute basic metric
+    int groundTruthEvents = (int)ground_truth.getEvents().size();
+    int observedTruthEvents = (int)observed_truth.getProcessedObjects().size();
+    int groundTruthObservedEvents[groundTruthEvents];
+    fill_n(groundTruthObservedEvents, groundTruthEvents, -1);
+    int lastObservedEvent = 0;
+    for(int j = 0; j < groundTruthEvents; j++){
+        bool foundMatch = false;
+        for(; lastObservedEvent < observedTruthEvents && !foundMatch; lastObservedEvent++){
+            float overlap = ground_truth.getEvents()[j].setOverlap(observed_truth.getProcessedObjects()[lastObservedEvent].getRectRoi());
+            if(overlap){
+                groundTruthObservedEvents[j] = lastObservedEvent;
+                ground_truth.basicMetric.truePositives++;
+                foundMatch = true;
+            }
+        }
+        if(!foundMatch)
+            ground_truth.basicMetric.falseNegatives++;
+    }
+    int lastGroundTruth = 0;
+    for(int j = 0; j < observedTruthEvents; j++){
+        for(; lastGroundTruth < groundTruthEvents; lastGroundTruth++){
+            if(groundTruthObservedEvents[lastGroundTruth] == j){
+                lastGroundTruth++;
+                break;
+            }
+            ground_truth.basicMetric.falseNegatives++;
+        }
+    }
+    cout << ground_truth.basicMetric.toString() << endl;
+    
+    // compute dice coefficient
+    for(int i = 0; i < groundTruthEvents; i++){
+        if(groundTruthObservedEvents[i] != -1){
+            vector<float> diceCoeffVector;
+            vector<Rect> areaVector = observed_truth.getProcessedObjects()[groundTruthObservedEvents[i]].getRoiVector();
+            for(int j = 0; j < (int) areaVector.size(); j++){
+                float numerator = (float)(2 * getOverlapArea(ground_truth.getEvents()[i].getRoi(), areaVector[j]));
+                float denominator = (float)areaVector[j].area() + (float)ground_truth.getEvents()[i].getRoi().area();
+                float diceCoef = numerator / denominator;
+                diceCoeffVector.push_back(diceCoef);
+            }
+            int medianIndex = (int) diceCoeffVector.size()/2;
+            ground_truth.events[i].medianDiceCoefficient = diceCoeffVector[medianIndex];
+            cout << "Dice coefficient: " << ground_truth.getEvents()[i].medianDiceCoefficient << endl;
+        }
+    }
+    
+    
 }
 
 int find_objects(VideoCapture video, WorldObjectManager &woManager, float learn_rate_one, float learn_rate_two, int bins){
