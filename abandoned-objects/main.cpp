@@ -29,7 +29,93 @@ SystemPerf ground_truth[NUMBER_VIDEOS] = {
 
 WorldObjectManager observed_truth[NUMBER_VIDEOS];
 
+// finds the objects in the video
 int find_objects(VideoCapture video, WorldObjectManager &woManager, float learn_rate_one, float learn_rate_two, int bins);
+
+// computes the performance metrics
+void compute_metrics(WorldObjectManager &woManager, SystemPerf &groundTruth);
+
+// intitialises the ground truth array
+void setup_ground_truth_events();
+
+int main(int argc, const char * argv[]) {
+    setup_ground_truth_events();
+    for(int i = 0; i < NUMBER_VIDEOS; i++){
+        cout << "Video #" << i + 1 << endl;
+        VideoCapture video = *new VideoCapture(ground_truth[i].getVideoFile());
+        observed_truth[i] = *new WorldObjectManager();
+        int res = find_objects(video, observed_truth[i], MB_LEARN_RATE_ONE, MB_LEARN_RATE_TWO, MB_NUMBER_BINS);
+        if(res == -1){
+            return -1;
+        }
+        compute_metrics(observed_truth[i], ground_truth[i]);
+        cout << endl << endl;
+    }
+    return 0;
+}
+
+int find_objects(VideoCapture video, WorldObjectManager &woManager, float learn_rate_one, float learn_rate_two, int bins){
+    if(!video.isOpened()){
+        cout << "Error: Video not opened." << endl;
+        return -1;
+    }
+    Mat current_frame, medianBgImageOne, medianBgImageTwo, medianDifference;
+    video.retrieve(current_frame);
+    woManager.setOriginalBackgroundImage(current_frame.clone());
+    MedianBackground medianBgOne = MedianBackground(current_frame, learn_rate_one, bins);
+    MedianBackground medianBgTwo = MedianBackground(current_frame, learn_rate_two, bins);
+    namedWindow("video");
+    namedWindow("difference");
+    for(int i = 0; i < (int)video.get(CV_CAP_PROP_FRAME_COUNT); i++){
+        
+        // updates the current frame and retrieves it
+        video.set(CV_CAP_PROP_POS_FRAMES, i);
+        video.retrieve(current_frame);
+        
+        // update the median background images
+        medianBgOne.UpdateBackground(current_frame);
+        medianBgTwo.UpdateBackground(current_frame);
+        medianBgImageOne = medianBgOne.GetBackgroundImage();
+        medianBgImageTwo = medianBgTwo.GetBackgroundImage();
+        
+        // get the binary difference image
+        absdiff(medianBgImageOne, medianBgImageTwo, medianDifference);
+        cvtColor(medianDifference, medianDifference, CV_BGR2GRAY);
+        threshold(medianDifference, medianDifference, MEDIAN_DIFFERENCE_THRESHOLD, 255, THRESH_BINARY);
+        
+        // clean the binary difference image
+        binary_closing_operation(&medianDifference);
+        binary_opening_operation(&medianDifference);
+        
+        // get object region contours
+        Mat medianDifferenceTemp = medianDifference.clone();
+        vector<vector<Point>> contours;
+        vector<Vec4i> hierarchy;
+        findContours(medianDifferenceTemp, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_NONE);
+        medianDifferenceTemp.release();
+        
+        // update world object manager if there are detected object regions
+        woManager.update(contours, current_frame.clone(), i);
+        woManager.drawCurrentObjectRegions(current_frame);
+        
+        // Update Window
+        writeText(current_frame, "Frame: " + to_string(i), 15, 10, Scalar(0, 255, 0));
+        writeText(current_frame, "Current Objects: " + to_string((int)woManager.getCurrentObjects().size()), 35, 10, Scalar(0, 255, 0));
+        writeText(current_frame, "Processed Objects: " + to_string((int)woManager.getProcessedObjects().size()), 55, 10, Scalar(0, 255, 0));
+        moveWindow("video", 0, 20);
+        imshow("video", current_frame);
+        moveWindow("difference", 0, current_frame.rows + 40);
+        imshow("difference", medianDifference);
+        cvWaitKey(1);
+    }
+    // updates the world object manager if the video ends while there were still contours.
+    if((int)woManager.getCurrentObjects().size() > 0){
+        vector<vector<Point>> empty;
+        woManager.update(empty, current_frame.clone(), (int)video.get(CV_CAP_PROP_FRAME_COUNT));
+    }
+    cout << woManager.processedObjectsToString();
+    return 0;
+}
 
 void setup_ground_truth_events(){
     // ground truth one
@@ -46,24 +132,6 @@ void setup_ground_truth_events(){
     eventTwo = *new VideoEvent(VIDEO_TWO_OBJECT_REMOVED, EVENT_REMOVED, Rect(top_left, bottom_right));
     ground_truth[VIDEO_TWO_INDEX].addEvent(eventOne);
     ground_truth[VIDEO_TWO_INDEX].addEvent(eventTwo);
-}
-
-void compute_metrics(WorldObjectManager &woManager, SystemPerf &groundTruth);
-
-int main(int argc, const char * argv[]) {
-    setup_ground_truth_events();
-    for(int i = 0; i < NUMBER_VIDEOS; i++){
-        cout << "Video #" << i + 1 << endl;
-        VideoCapture video = *new VideoCapture(ground_truth[i].getVideoFile());
-        observed_truth[i] = *new WorldObjectManager();
-        int res = find_objects(video, observed_truth[i], MB_LEARN_RATE_ONE, MB_LEARN_RATE_TWO, MB_NUMBER_BINS);
-        if(res == -1){
-            return -1;
-        }
-        compute_metrics(observed_truth[i], ground_truth[i]);
-        cout << endl << endl;
-    }
-    return 0;
 }
 
 void compute_metrics(WorldObjectManager &observed_truth, SystemPerf &ground_truth){
@@ -150,67 +218,4 @@ void compute_metrics(WorldObjectManager &observed_truth, SystemPerf &ground_trut
         }
     }
     cout << "Event Metric:" << endl << ground_truth.eventMetric.toString();
-}
-
-int find_objects(VideoCapture video, WorldObjectManager &woManager, float learn_rate_one, float learn_rate_two, int bins){
-    if(!video.isOpened()){
-        cout << "Error: Video not opened." << endl;
-        return -1;
-    }
-    Mat current_frame, medianBgImageOne, medianBgImageTwo, medianDifference;
-    video.retrieve(current_frame);
-    woManager.setOriginalBackgroundImage(current_frame.clone());
-    MedianBackground medianBgOne = MedianBackground(current_frame, learn_rate_one, bins);
-    MedianBackground medianBgTwo = MedianBackground(current_frame, learn_rate_two, bins);
-    namedWindow("video");
-    namedWindow("difference");
-    for(int i = 0; i < (int)video.get(CV_CAP_PROP_FRAME_COUNT); i++){
-        
-        // updates the current frame and retrieves it
-        video.set(CV_CAP_PROP_POS_FRAMES, i);
-        video.retrieve(current_frame);
-        
-        // update the median background images
-        medianBgOne.UpdateBackground(current_frame);
-        medianBgTwo.UpdateBackground(current_frame);
-        medianBgImageOne = medianBgOne.GetBackgroundImage();
-        medianBgImageTwo = medianBgTwo.GetBackgroundImage();
-        
-        // get the binary difference image
-        absdiff(medianBgImageOne, medianBgImageTwo, medianDifference);
-        cvtColor(medianDifference, medianDifference, CV_BGR2GRAY);
-        threshold(medianDifference, medianDifference, MEDIAN_DIFFERENCE_THRESHOLD, 255, THRESH_BINARY);
-        
-        // clean the binary difference image
-        binary_closing_operation(&medianDifference);
-        binary_opening_operation(&medianDifference);
-        
-        // get object region contours
-        Mat medianDifferenceTemp = medianDifference.clone();
-        vector<vector<Point>> contours;
-        vector<Vec4i> hierarchy;
-        findContours(medianDifferenceTemp, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_NONE);
-        medianDifferenceTemp.release();
-        
-        // update world object manager if there are detected object regions
-        woManager.update(contours, current_frame.clone(), i);
-        woManager.drawCurrentObjectRegions(current_frame);
-        
-        // Update Window
-        writeText(current_frame, "Frame: " + to_string(i), 15, 10, Scalar(0, 255, 0));
-        writeText(current_frame, "Current Objects: " + to_string((int)woManager.getCurrentObjects().size()), 35, 10, Scalar(0, 255, 0));
-        writeText(current_frame, "Processed Objects: " + to_string((int)woManager.getProcessedObjects().size()), 55, 10, Scalar(0, 255, 0));
-        moveWindow("video", 0, 20);
-        imshow("video", current_frame);
-        moveWindow("difference", 0, current_frame.rows + 40);
-        imshow("difference", medianDifference);
-        cvWaitKey(1);
-    }
-    // updates the world object manager if the video ends while there were still contours.
-    if((int)woManager.getCurrentObjects().size() > 0){
-        vector<vector<Point>> empty;
-        woManager.update(empty, current_frame.clone(), (int)video.get(CV_CAP_PROP_FRAME_COUNT));
-    }
-    cout << woManager.processedObjectsToString();
-    return 0;
 }

@@ -251,13 +251,13 @@ void WorldObjectManager::processObject(WorldObject object, Mat currentFrameImage
     Mat originalImageRegion = originalBackgroundImage(increaseRectSize(object.getRectRoi(), EXPANDED_ROI_EDGE_DETECTION_DISTANCE));
     Mat objectImageRegion = object.getObjectImageRegion();
     cvtColor(originalImageRegion, originalImageRegion, CV_BGR2GRAY);
-//    imshow("gray1", originalImageRegion);
+//    imshow("Original Grayscale", originalImageRegion);
     cvtColor(objectImageRegion, objectImageRegion, CV_BGR2GRAY);
-//    imshow("gray2", objectImageRegion);
+//    imshow("Object GrayScale", objectImageRegion);
     Canny(originalImageRegion, originalImageRegion, EDGE_DETECTION_LOW_THRESHOLD, EDGE_DETECTION_HIGH_THRESHOLD);
-//    imshow("bin1", originalImageRegion);
+//    imshow("Original Edges", originalImageRegion);
     Canny(objectImageRegion, objectImageRegion, EDGE_DETECTION_LOW_THRESHOLD, EDGE_DETECTION_HIGH_THRESHOLD);
-//    imshow("bin2", objectImageRegion);
+//    imshow("Object Edges", objectImageRegion);
 //    cvWaitKey(0);
 //    cvDestroyAllWindows();
     // get connected components first image
