@@ -90,8 +90,8 @@ void WorldObject::setContour(vector<Point> contour){
 
 string WorldObject::toString(){
     stringstream str;
-    str << "Location: " << this->getCentre() << " Area: " << to_string(getArea());
-    str << "FA: " << frameAppeared << "FL: " << frameLargest << " FD: " << frameDisappeared << endl;
+    str << "Top Left: " << this->getRectRoi().tl() << " Bottom Right: " << this->getRectRoi().br() << " Area: " << to_string(getArea());
+    str << " FA: " << frameAppeared << " FL: " << frameLargest << " FD: " << frameDisappeared << endl;
     return str.str();
 }
 
@@ -192,7 +192,6 @@ void WorldObjectManager::mergeAdjacentCurrentObjects(){
         for(int j = i + 1; j < numberCurrentObjects; j++){
             // check if the current object i is adjacent to the current object j
             if(currentObjects[i].checkAdjacency(currentObjects[j].getRectRoi())){
-                cout << "adjacent" << endl;
                 mergeObjectIndices.push_back(j);
                 if(currentObjects[j].getFrameAppeared() < currentObjects[mergeObjectIndices[mergeListFirstAppearedIndex]].getFrameAppeared()){
                     mergeListFirstAppearedIndex = (int)mergeObjectIndices.size() - 1;
