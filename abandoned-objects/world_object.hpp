@@ -27,6 +27,7 @@ class WorldObject{
 private:
     cv::Mat objectImageRegion;
     std::vector<cv::Point> contour;
+    std::vector<double> areaVector;
     int frameAppeared = 0;
     int frameLargest = 0;
     int frameDisappeared = 0;
@@ -54,6 +55,12 @@ public:
     bool checkAdjacency(cv::Rect region, int adjacencyDistance=WORLD_OBJECT_ADJACENCY_DISTANCE);
     
     // get and set
+    
+    // updates the area vector by adding on another element of the current area
+    void updateAreaVector();
+    
+    // returns the area vector
+    std::vector<double> getAreaVector();
     
     cv::Mat getObjectImageRegion();
     

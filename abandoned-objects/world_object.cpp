@@ -57,6 +57,14 @@ bool WorldObject::checkAdjacency(cv::Rect region, int adjacencyDistance){
     return this->checkOverlap(region);
 }
 
+void WorldObject::updateAreaVector(){
+    this->areaVector.push_back(this->getArea());
+}
+
+vector<double> WorldObject::getAreaVector(){
+    return this->areaVector;
+}
+
 cv::Mat WorldObject::getObjectImageRegion(){
     return this->objectImageRegion;
 }
@@ -134,6 +142,7 @@ void WorldObjectManager::update(std::vector<std::vector <cv::Point>> contours, M
             // mark object as gone
             currentObjects[i].status = OBJ_GONE;
             currentObjects[i].setFrameDisappeared(referenceIndex);
+            currentObjects[i].updateAreaVector();
             processObject(currentObjects[i], currentFrameImage);
             removeObjects.push_back(i);
         }
@@ -165,6 +174,10 @@ void WorldObjectManager::update(std::vector<std::vector <cv::Point>> contours, M
         if(!contourMatchesObject[i]){
             currentObjects.push_back(*new WorldObject(contours[i], referenceIndex));
         }
+    }
+    // update the area vector of each world object
+    for(int i = 0; i < (int)currentObjects.size(); i++){
+        currentObjects[i].updateAreaVector();
     }
 }
 
@@ -238,15 +251,15 @@ void WorldObjectManager::processObject(WorldObject object, Mat currentFrameImage
     Mat originalImageRegion = originalBackgroundImage(increaseRectSize(object.getRectRoi(), EXPANDED_ROI_EDGE_DETECTION_DISTANCE));
     Mat objectImageRegion = object.getObjectImageRegion();
     cvtColor(originalImageRegion, originalImageRegion, CV_BGR2GRAY);
-    imshow("gray1", originalImageRegion);
+//    imshow("gray1", originalImageRegion);
     cvtColor(objectImageRegion, objectImageRegion, CV_BGR2GRAY);
-    imshow("gray2", objectImageRegion);
+//    imshow("gray2", objectImageRegion);
     Canny(originalImageRegion, originalImageRegion, EDGE_DETECTION_LOW_THRESHOLD, EDGE_DETECTION_HIGH_THRESHOLD);
-    imshow("bin1", originalImageRegion);
+//    imshow("bin1", originalImageRegion);
     Canny(objectImageRegion, objectImageRegion, EDGE_DETECTION_LOW_THRESHOLD, EDGE_DETECTION_HIGH_THRESHOLD);
-    imshow("bin2", objectImageRegion);
-    cvWaitKey(0);
-    cvDestroyAllWindows();
+//    imshow("bin2", objectImageRegion);
+//    cvWaitKey(0);
+//    cvDestroyAllWindows();
     // get connected components first image
     vector<vector <Point>> contoursOriginalImage;
     vector<Vec4i> hierarchyOriginalImage;
@@ -262,7 +275,6 @@ void WorldObjectManager::processObject(WorldObject object, Mat currentFrameImage
     }else{
         object.type = OBJ_ABANDONED;
     }
-    cout << originalImageEdges << " : " << objectImageEdges << endl;
     // updates the world object manager background image after the object becomes part of the background
     processedObjects.push_back(object);
     this->originalBackgroundImage.release();

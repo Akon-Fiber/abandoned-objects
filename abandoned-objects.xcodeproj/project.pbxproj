@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6353EFC41C2868600060FAAC /* system_perf.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6353EFC21C2868600060FAAC /* system_perf.cpp */; };
 		637189CD1C25F9C300B51328 /* world_object.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 637189CB1C25F9C300B51328 /* world_object.cpp */; };
 		63938A0D1C16607D002A0A40 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63938A0C1C16607D002A0A40 /* main.cpp */; };
 		63938A151C166281002A0A40 /* utilities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63938A131C166281002A0A40 /* utilities.cpp */; };
@@ -27,6 +28,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		6353EFC21C2868600060FAAC /* system_perf.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = system_perf.cpp; sourceTree = "<group>"; };
+		6353EFC31C2868600060FAAC /* system_perf.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = system_perf.hpp; sourceTree = "<group>"; };
 		637189CB1C25F9C300B51328 /* world_object.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = world_object.cpp; sourceTree = "<group>"; };
 		637189CC1C25F9C300B51328 /* world_object.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = world_object.hpp; sourceTree = "<group>"; };
 		63938A091C16607D002A0A40 /* abandoned-objects */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "abandoned-objects"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -78,6 +81,8 @@
 				63938A1A1C166636002A0A40 /* video.hpp */,
 				637189CB1C25F9C300B51328 /* world_object.cpp */,
 				637189CC1C25F9C300B51328 /* world_object.hpp */,
+				6353EFC21C2868600060FAAC /* system_perf.cpp */,
+				6353EFC31C2868600060FAAC /* system_perf.hpp */,
 			);
 			path = "abandoned-objects";
 			sourceTree = "<group>";
@@ -141,6 +146,7 @@
 				63938A151C166281002A0A40 /* utilities.cpp in Sources */,
 				63938A1B1C166636002A0A40 /* video.cpp in Sources */,
 				63938A181C166576002A0A40 /* histogram.cpp in Sources */,
+				6353EFC41C2868600060FAAC /* system_perf.cpp in Sources */,
 				63938A0D1C16607D002A0A40 /* main.cpp in Sources */,
 				637189CD1C25F9C300B51328 /* world_object.cpp in Sources */,
 			);
